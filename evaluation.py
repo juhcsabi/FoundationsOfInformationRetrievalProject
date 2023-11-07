@@ -1,7 +1,7 @@
-from trec_files import read_qrels_file, read_run_file
+from trec_files import read_qrels_file, read_run_file, read_eval_files
 
 
-def success_at_1 (relevant, retrieved):
+def success_at_1(relevant, retrieved):
     if len(retrieved) > 0 and retrieved[0] in relevant:
         return 1
     else:
@@ -14,6 +14,7 @@ def success_at_k(relevant, retrieved, k):
             if element in relevant:
                 return 1
     return 0
+
 
 def success_at_5(relevant, retrieved):
     return success_at_k(relevant, retrieved, k=5)
@@ -36,7 +37,8 @@ def recall(relevant, retrieved):
 
 
 def f_measure(relevant, retrieved, beta=1):
-    return (beta*beta + 1) * recall(relevant, retrieved) * precision(relevant, retrieved) / ((beta*beta) * precision(relevant, retrieved) + recall(relevant, retrieved))
+    return (beta * beta + 1) * recall(relevant, retrieved) * precision(relevant, retrieved) / (
+            (beta * beta) * precision(relevant, retrieved) + recall(relevant, retrieved))
 
 
 def precision_at_k(relevant, retrieved, k):
@@ -51,27 +53,26 @@ def recall_at_k(relevant, retrieved, k):
     return recall(relevant, retrieved[:k])
 
 
-def interpolated_precision_at_recall_X (relevant, retrieved, X):
-    recalls_at_ranks = {}
+def interpolated_precision_at_recall_X(relevant, retrieved, X):
     max_prec = 0.0
     for k in range(len(retrieved)):
-        re_at_k = recall_at_k(relevant, retrieved, k=k+1)
+        re_at_k = recall_at_k(relevant, retrieved, k=k + 1)
         if re_at_k >= X:
-            #print(re_at_k)
-            prec_at_k = precision_at_k(relevant, retrieved, k=k+1)
+            # print(re_at_k)
+            prec_at_k = precision_at_k(relevant, retrieved, k=k + 1)
             if prec_at_k > max_prec:
                 max_prec = prec_at_k
     return max_prec
 
 
 def average_precision(relevant, retrieved):
-    precisions = [0 for i in range(len(relevant))]
+    precisions = [0.0 for _ in range(len(relevant))]
     relevant_found = 0
     for i in range(len(retrieved)):
         if retrieved[i] in relevant:
-            precisions[relevant_found] = precision_at_k(relevant, retrieved, k=i+1)
+            precisions[relevant_found] = precision_at_k(relevant, retrieved, k=i + 1)
             relevant_found += 1
-    return sum(precisions)/len(precisions)
+    return sum(precisions) / len(precisions)
 
 
 def mean_average_precision(all_relevant, all_retrieved):
@@ -87,7 +88,7 @@ def mean_metric(measure, all_relevant, all_retrieved):
     total = 0
     count = 0
     for qid in all_relevant:
-        relevant  = all_relevant[qid]
+        relevant = all_relevant[qid]
         retrieved = all_retrieved.get(qid, [])
         value = measure(relevant, retrieved)
         total += value
@@ -165,18 +166,14 @@ def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
     all_retrieved_2 = read_run_file(run_file_2)
     better = 0
     worse = 0
-    # BEGIN ANSWER
     for key in all_relevant:
-        # print(sorted(all_relevant[key]))
-        # print(all_retrieved_1[key][:5])
-        # print(all_retrieved_2[key][:5])
-        if precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) > precision_at_rank_5(all_relevant[key],
+        if precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) > measure(all_relevant[key],
                                                                                               all_retrieved_2[key]):
             worse += 1
-        elif precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) < precision_at_rank_5(all_relevant[key],
+        elif precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) < measure(all_relevant[key],
                                                                                                 all_retrieved_2[key]):
             better += 1
-    return (better, worse)
+    return better, worse
 
 
 def precision_at_rank_5(rel, ret):

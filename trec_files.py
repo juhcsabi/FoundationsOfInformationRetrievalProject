@@ -1,5 +1,6 @@
 from elasticsearch_dsl import Search, Q
 
+
 def read_qrels_file(qrels_file):  # reads the content of he qrels file
     trec_relevant = dict()  # query_id -> set([docid1, docid2, ...])
     with open(qrels_file, 'r') as qrels:
@@ -7,7 +8,7 @@ def read_qrels_file(qrels_file):  # reads the content of he qrels file
             (qid, q0, doc_id, rel) = line.strip().split()
             if qid not in trec_relevant:
                 trec_relevant[qid] = set()
-            if (rel == "1"):
+            if rel == "1":
                 trec_relevant[qid].add(doc_id)
     return trec_relevant
 
@@ -29,7 +30,7 @@ def read_eval_files(qrels_file, run_file):
     return read_qrels_file(qrels_file), read_run_file(run_file)
 
 
-def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test"):
+def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics"):
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
             for line in test_queries:
@@ -44,8 +45,7 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
 
 
-
-## Probably this one should be used
+# Probably this one should be used
 def make_trec_run2(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", field="title-abstract"):
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
@@ -54,7 +54,7 @@ def make_trec_run2(es, topics_file_name, run_file_name, index_name="genomics", r
                 search_type = "dfs_query_then_fetch"
                 body = {
                     "query": {
-                        "match" : { field : query }
+                        "match": {field: query}
                     },
                     "size": 1000
                 }

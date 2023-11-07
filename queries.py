@@ -2,6 +2,7 @@ import elasticsearch
 import elasticsearch.helpers
 import json
 
+
 def start_elastic_search():
     return elasticsearch.Elasticsearch(host='localhost')
 
@@ -13,25 +14,28 @@ def read_documents(file_name):
     with open(file_name, 'r') as documents:
         for line in documents:
             doc_line = json.loads(line)
-            if ('index' in doc_line):
+            if 'index' in doc_line:
                 id = doc_line['index']['_id']
-            elif ('PMID' in doc_line):
+            elif 'PMID' in doc_line:
                 doc_line['_id'] = id
                 yield doc_line
             else:
                 raise ValueError('Woops, error in index file')
 
 
-def create_index(es, index_name, body={}):
+def create_index(es, index_name, body=None):
     # delete index when it already exists
+    if body is None:
+        body = {}
     es.indices.delete(index=index_name, ignore=[400, 404])
     # create the index
     es.indices.create(index=index_name, body=body)
 
 
-def index_documents(es, collection_file_name, index_name, body={}):
+def index_documents(es, collection_file_name, index_name, body=None):
+    if body is None:
+        body = {}
     create_index(es, index_name, body)
-    # bulk index the documents from file_name
     return elasticsearch.helpers.bulk(
         es,
         read_documents(collection_file_name),
