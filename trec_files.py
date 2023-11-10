@@ -1,4 +1,5 @@
 from elasticsearch_dsl import Search, Q
+from pseudo_relevance import pseudo_rel
 
 
 def read_qrels_file(qrels_file):  # reads the content of he qrels file
@@ -29,21 +30,6 @@ def read_run_file(run_file):
 def read_eval_files(qrels_file, run_file):
     return read_qrels_file(qrels_file), read_run_file(run_file)
 
-
-# def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics"):
-#     with open(run_file_name, 'w') as run_file:
-#         with open(topics_file_name, 'r') as test_queries:
-#             for line in test_queries:
-#                 (qid, query) = line.strip().split('\t')
-#                 s = Search(using=es, index=index_name)
-#                 s = s.extra(size=1000)
-
-#                 q = Q("multi_match", query=query, fields=['TI', 'AB'])
-
-#                 response = s.query(q).execute()
-#                 for i, hit in enumerate(response['hits']['hits']):
-#                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
-
                 
 def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", pseudo_relevance=False):
     with open(run_file_name, 'w') as run_file:
@@ -57,10 +43,9 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
 
                 response = s.query(q).execute()
                 
+                # Call the pseudo relevance method
                 if pseudo_relevance:
-                    # PSEUDOPRELEVANCE HERE:
-                    # Call trec_run(pseudo_relevance=False) based on the new query
-                    pass
+                    response = pseudo_rel(response)
                 
                 for i, hit in enumerate(response['hits']['hits']):
                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")

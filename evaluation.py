@@ -160,6 +160,13 @@ def trec_eval(qrels_file, run_file):
     return [mean_metric(metric, all_relevant, all_retrieved) for metric in metrics]
 
 
+def print_trec_eval(qrels_file, run_file):
+    results = trec_eval(qrels_file, run_file)
+    print("Results for {}".format(run_file))
+    for (metric, score) in results:
+        print("{:<30} {:.4}".format(metric, score))
+        
+
 def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
     all_relevant = read_qrels_file(qrels_file)
     all_retrieved_1 = read_run_file(run_file_1)
