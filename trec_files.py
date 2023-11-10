@@ -30,19 +30,41 @@ def read_eval_files(qrels_file, run_file):
     return read_qrels_file(qrels_file), read_run_file(run_file)
 
 
-def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics"):
+# def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics"):
+#     with open(run_file_name, 'w') as run_file:
+#         with open(topics_file_name, 'r') as test_queries:
+#             for line in test_queries:
+#                 (qid, query) = line.strip().split('\t')
+#                 s = Search(using=es, index=index_name)
+#                 s = s.extra(size=1000)
+
+#                 q = Q("multi_match", query=query, fields=['TI', 'AB'])
+
+#                 response = s.query(q).execute()
+#                 for i, hit in enumerate(response['hits']['hits']):
+#                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
+
+                
+def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", pseudo_relevance=False):
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
             for line in test_queries:
                 (qid, query) = line.strip().split('\t')
                 s = Search(using=es, index=index_name)
                 s = s.extra(size=1000)
-
+                
                 q = Q("multi_match", query=query, fields=['TI', 'AB'])
 
                 response = s.query(q).execute()
+                
+                if pseudo_relevance:
+                    # PSEUDOPRELEVANCE HERE:
+                    # Call trec_run(pseudo_relevance=False) based on the new query
+                    pass
+                
                 for i, hit in enumerate(response['hits']['hits']):
                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
+
 
 
 # Probably this one should be used
@@ -50,6 +72,7 @@ def make_trec_run2(es, topics_file_name, run_file_name, index_name="genomics", r
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
             for line in test_queries:
+                print("test")
                 (qid, query) = line.strip().split('\t')
                 search_type = "dfs_query_then_fetch"
                 body = {
@@ -59,5 +82,6 @@ def make_trec_run2(es, topics_file_name, run_file_name, index_name="genomics", r
                     "size": 1000
                 }
                 response = es.search(index=index_name, search_type=search_type, body=body)
+                print(response)
                 for i, hit in enumerate(response['hits']['hits']):
                     run_file.write(f"{qid} {run_name} {hit['_source']['PMID']} {i} {hit['_score']} cj_search2\n")
