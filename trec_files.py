@@ -34,6 +34,7 @@ def read_eval_files(qrels_file, run_file):
 def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", pseudo_relevance=False):
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
+            q_index=0
             for line in test_queries:
                 (qid, query) = line.strip().split('\t')
                 s = Search(using=es, index=index_name)
@@ -45,7 +46,8 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
                 
                 # Call the pseudo relevance method
                 if pseudo_relevance:
-                    response = pseudo_rel(response)
+                    response = pseudo_rel(query, response, q_index)
+                    q_index+=1
                 
                 for i, hit in enumerate(response['hits']['hits']):
                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
