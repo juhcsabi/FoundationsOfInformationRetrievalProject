@@ -53,38 +53,34 @@ def get_tfidf(corpus):
     
     
 def pseudo_rel(query, retrieved_docs, q_index, k_pseudo_docs=10, k_pseudo_terms=10):
-    retrieved_docs_new = []
+    enhanced_query = query
     
-    if q_index==0:
-        print(query, "\n\n")
-        
-        corpus=[]
-        
-        for doc in retrieved_docs[:k_pseudo_docs]:
-            # Use the Title ('TI') and the Abstract ('AB') to search for words
-            try:
-                text = doc['TI'] + doc['AB']
-            
-                text = preprocess_text(text)
+    print(query, "\n")
 
-                corpus.append(text)
-            except Exception as e:
-#                 print("EXCEPTION in doc:\n", e, "\n", doc, "\n\n")
-                pass
-        
-        best_terms = get_tfidf(corpus)[0][:k_pseudo_terms]
-        print(best_terms, "\n")
-        
-        new_query = query
-        for new_term in best_terms:
-            new_query += " " + new_term[0]
-        
-        print(new_query, "\n")
-            
-    
+    corpus=[]
 
-    retrieved_docs_new = retrieved_docs
-    return retrieved_docs_new
+    for doc in retrieved_docs[:k_pseudo_docs]:
+        # Use the Title ('TI') and the Abstract ('AB') to search for words
+        try:
+            text = doc['TI'] + doc['AB']
+
+            text = preprocess_text(text)
+
+            corpus.append(text)
+        except Exception as e:
+            # Documents that have no 'AB' field get caught here
+            pass
+
+    # Using the corpus get tf_idf ranks for all terms and enhance the current query
+    best_terms = get_tfidf(corpus)[0][:k_pseudo_terms]
+
+    enhanced_query = query
+    for new_term in best_terms:
+        enhanced_query += " " + new_term[0]
+
+    print(enhanced_query, "\n\n")
+        
+    return enhanced_query
 
 
 

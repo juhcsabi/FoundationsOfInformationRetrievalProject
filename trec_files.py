@@ -46,7 +46,12 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
                 
                 # Call the pseudo relevance method
                 if pseudo_relevance:
-                    response = pseudo_rel(query, response, q_index)
+                    enhanced_query = pseudo_rel(query, response, q_index)
+                    
+                    # Perform new search with the enhanced query
+                    q = Q("multi_match", query=enhanced_query, fields=['TI', 'AB'])
+                    response = s.query(q).execute()
+                    
                     q_index+=1
                 
                 
