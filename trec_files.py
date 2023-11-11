@@ -49,6 +49,7 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
                     response = pseudo_rel(query, response, q_index)
                     q_index+=1
                 
+                
                 for i, hit in enumerate(response['hits']['hits']):
                     run_file.write(f"{qid} Q0 {hit['_source']['PMID']} {i} {hit['_score']} cj_search\n")
 
