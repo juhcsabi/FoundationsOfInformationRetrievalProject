@@ -31,7 +31,7 @@ def read_eval_files(qrels_file, run_file):
     return read_qrels_file(qrels_file), read_run_file(run_file)
 
                 
-def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", pseudo_relevance=False):
+def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", run_name="test", pseudo_relevance=False, k_docs=10, terms_frac=0.2):
     with open(run_file_name, 'w') as run_file:
         with open(topics_file_name, 'r') as test_queries:
             q_index=0
@@ -46,7 +46,7 @@ def make_trec_run(es, topics_file_name, run_file_name, index_name="genomics", ru
                 
                 # Call the pseudo relevance method
                 if pseudo_relevance:
-                    enhanced_query = pseudo_rel(query, response, q_index)
+                    enhanced_query = pseudo_rel(query, response, k_docs, terms_frac, q_index)
                     
                     # Perform new search with the enhanced query
                     q = Q("multi_match", query=enhanced_query, fields=['TI', 'AB'])

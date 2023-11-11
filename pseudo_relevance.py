@@ -32,17 +32,13 @@ def preprocess_text(text):
 
 def get_tfidf(corpus):
     tfidf_matrix = vectorizer.fit_transform(corpus)
-    
     terms = vectorizer.get_feature_names_out()
-    
     tfidf_scores = []
     
     for i, doc in enumerate(corpus):
         # Get the TF-IDF scores for each term in the document
         doc_tfidf = tfidf_matrix.getrow(i)
-        
         doc_tfidf_dict = {term: doc_tfidf[0, j] for j, term in enumerate(terms)}
-        
         sorted_doc_tfidf = sorted(doc_tfidf_dict.items(), key=itemgetter(1), reverse=True)
         
         tfidf_scores.append(sorted_doc_tfidf)
@@ -52,10 +48,8 @@ def get_tfidf(corpus):
 
     
     
-def pseudo_rel(query, retrieved_docs, q_index, k_pseudo_docs=10, k_pseudo_terms=10):
+def pseudo_rel(query, retrieved_docs, k_pseudo_docs, term_frac, q_index):
     enhanced_query = query
-    
-    print(query, "\n")
 
     corpus=[]
 
@@ -63,22 +57,18 @@ def pseudo_rel(query, retrieved_docs, q_index, k_pseudo_docs=10, k_pseudo_terms=
         # Use the Title ('TI') and the Abstract ('AB') to search for words
         try:
             text = doc['TI'] + doc['AB']
-
             text = preprocess_text(text)
-
             corpus.append(text)
         except Exception as e:
             # Documents that have no 'AB' field get caught here
             pass
 
-    # Using the corpus get tf_idf ranks for all terms and enhance the current query
-    best_terms = get_tfidf(corpus)[0][:k_pseudo_terms]
+    # Using the corpus get tf_idf ranks for all terms and enhance the current query with a fraction of these terms
+    sorted_terms = get_tfidf(corpus)[0]
+    best_terms = sorted_terms[:(int(len(sorted_terms)*term_frac))]
 
-    enhanced_query = query
     for new_term in best_terms:
         enhanced_query += " " + new_term[0]
-
-    print(enhanced_query, "\n\n")
         
     return enhanced_query
 
