@@ -1,14 +1,17 @@
+import os
+import typing
+
 from trec_files import read_qrels_file, read_run_file, read_eval_files
 
 
-def success_at_1(relevant, retrieved):
+def success_at_1(relevant: list, retrieved: list) -> int:
     if len(retrieved) > 0 and retrieved[0] in relevant:
         return 1
     else:
         return 0
 
 
-def success_at_k(relevant, retrieved, k):
+def success_at_k(relevant: list, retrieved: list, k: int) -> int:
     if len(retrieved) >= k:
         for element in retrieved[:k]:
             if element in relevant:
@@ -16,44 +19,44 @@ def success_at_k(relevant, retrieved, k):
     return 0
 
 
-def success_at_5(relevant, retrieved):
+def success_at_5(relevant: list, retrieved: list) -> int:
     return success_at_k(relevant, retrieved, k=5)
 
 
-def success_at_10(relevant, retrieved):
+def success_at_10(relevant: list, retrieved: list) -> int:
     return success_at_k(relevant, retrieved, k=10)
 
 
-def relevant_items_retrieved(relevant, retrieved):
+def relevant_items_retrieved(relevant: list, retrieved: list) -> int:
     return sum([retrieved_doc in relevant for retrieved_doc in retrieved])
 
 
-def precision(relevant, retrieved):
-    return relevant_items_retrieved(relevant, retrieved) / len(retrieved)
+def precision(relevant: list, retrieved: list) -> float:
+    return (relevant_items_retrieved(relevant, retrieved) / len(retrieved)) if len(retrieved) > 0 else 0 
 
 
-def recall(relevant, retrieved):
+def recall(relevant: list, retrieved: list) -> float:
     return relevant_items_retrieved(relevant, retrieved) / len(relevant)
 
 
-def f_measure(relevant, retrieved, beta=1):
+def f_measure(relevant: list, retrieved: list, beta=1) -> float:
     return (beta * beta + 1) * recall(relevant, retrieved) * precision(relevant, retrieved) / (
             (beta * beta) * precision(relevant, retrieved) + recall(relevant, retrieved))
 
 
-def precision_at_k(relevant, retrieved, k):
+def precision_at_k(relevant: list, retrieved: list, k: int) -> float:
     return precision(relevant, retrieved[:k])
 
 
-def r_precision(relevant, retrieved):
+def r_precision(relevant: list, retrieved: list) -> float:
     return precision_at_k(relevant, retrieved, len(relevant))
 
 
-def recall_at_k(relevant, retrieved, k):
+def recall_at_k(relevant: list, retrieved: list, k: int) -> float:
     return recall(relevant, retrieved[:k])
 
 
-def interpolated_precision_at_recall_X(relevant, retrieved, X):
+def interpolated_precision_at_recall_X(relevant: list, retrieved: list, X: float) -> float:
     max_prec = 0.0
     for k in range(len(retrieved)):
         re_at_k = recall_at_k(relevant, retrieved, k=k + 1)
@@ -65,7 +68,7 @@ def interpolated_precision_at_recall_X(relevant, retrieved, X):
     return max_prec
 
 
-def average_precision(relevant, retrieved):
+def average_precision(relevant: list, retrieved: list) -> float:
     precisions = [0.0 for _ in range(len(relevant))]
     relevant_found = 0
     for i in range(len(retrieved)):
@@ -75,7 +78,7 @@ def average_precision(relevant, retrieved):
     return sum(precisions) / len(precisions)
 
 
-def mean_average_precision(all_relevant, all_retrieved):
+def mean_average_precision(all_relevant: list, all_retrieved: list) -> float:
     count = 0
     total = 0
     for key in all_relevant:
@@ -84,7 +87,7 @@ def mean_average_precision(all_relevant, all_retrieved):
     return total / count
 
 
-def mean_metric(measure, all_relevant, all_retrieved):
+def mean_metric(measure, all_relevant: list, all_retrieved: list) -> typing.Tuple[str, float]:
     total = 0
     count = 0
     for qid in all_relevant:
@@ -96,7 +99,7 @@ def mean_metric(measure, all_relevant, all_retrieved):
     return "mean " + measure.__name__, total / count
 
 
-def trec_eval(qrels_file, run_file):
+def trec_eval(qrels_file: os.PathLike, run_file: os.PathLike) -> typing.List[typing.Tuple[str, float]]:
     def precision_at_1(rel, ret): return precision_at_k(rel, ret, k=1)
 
     def precision_at_5(rel, ret): return precision_at_k(rel, ret, k=5)
@@ -159,8 +162,15 @@ def trec_eval(qrels_file, run_file):
 
     return [mean_metric(metric, all_relevant, all_retrieved) for metric in metrics]
 
+def trec_eval_to_str(qrels_file, run_file):
+    ret_str = f"Results for {run_file}\n"
+    results = trec_eval(qrels_file, run_file)
+    for (metric, score) in results:
+        ret_str += "{:<30} {:.4}\n".format(metric, score)
+    return ret_str
 
-def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
+
+def sign_test_values(measure: callable, qrels_file: os.PathLike, run_file_1: os.PathLike, run_file_2: os.PathLike) -> typing.Tuple[int, int]:
     all_relevant = read_qrels_file(qrels_file)
     all_retrieved_1 = read_run_file(run_file_1)
     all_retrieved_2 = read_run_file(run_file_2)
@@ -176,5 +186,5 @@ def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
     return better, worse
 
 
-def precision_at_rank_5(rel, ret):
+def precision_at_rank_5(rel: list, ret: list) -> float:
     return precision_at_k(rel, ret, k=5)
