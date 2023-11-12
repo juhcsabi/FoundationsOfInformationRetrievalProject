@@ -205,4 +205,5 @@ def evaluate_run_files():
 
 #main()
 
-trec_files.make_trec_run(queries.start_elastic_search(), "data01/FIR-s05-training-queries-simple.txt", "test.run", "classic_11")
+#trec_files.make_trec_run(queries.start_elastic_search(), "data01/FIR-s05-training-queries-simple.txt", "test.run", "classic_11")
+evaluation.t_test_outputs("data01/FIR-s05-training-qrels.txt", "baseline.run", "results/classic_11.run")

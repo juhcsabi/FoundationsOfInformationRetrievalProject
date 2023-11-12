@@ -2,6 +2,8 @@ import os
 import typing
 
 from trec_files import read_qrels_file, read_run_file, read_eval_files
+from scipy.stats import ttest_rel
+from scipy.stats import binomtest
 
 
 def success_at_1(relevant: list, retrieved: list) -> int:
@@ -170,21 +172,50 @@ def trec_eval_to_str(qrels_file, run_file):
     return ret_str
 
 
-def sign_test_values(measure: callable, qrels_file: os.PathLike, run_file_1: os.PathLike, run_file_2: os.PathLike) -> typing.Tuple[int, int]:
+def sign_test_values(measure: callable, qrels_file: os.PathLike, run_file_1: os.PathLike, run_file_2: os.PathLike) -> typing.Tuple[int, int, int]:
     all_relevant = read_qrels_file(qrels_file)
     all_retrieved_1 = read_run_file(run_file_1)
     all_retrieved_2 = read_run_file(run_file_2)
     better = 0
     worse = 0
+    equal = 0
     for key in all_relevant:
-        if precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) > measure(all_relevant[key],
-                                                                                              all_retrieved_2[key]):
+        if measure(all_relevant[key], all_retrieved_1[key]) > measure(all_relevant[key],
+                                                                                        all_retrieved_2[key]):
             worse += 1
-        elif precision_at_rank_5(all_relevant[key], all_retrieved_1[key]) < measure(all_relevant[key],
-                                                                                                all_retrieved_2[key]):
+        elif measure(all_relevant[key], all_retrieved_1[key]) < measure(all_relevant[key],
+                                                                                        all_retrieved_2[key]):
             better += 1
-    return better, worse
+        else:
+            equal += 1
+    return better, worse, equal
+
+def t_test_outputs(qrels_file, run_file_1, run_file_2):
+
+    all_relevant = read_qrels_file(qrels_file)
+    all_retrieved_1 = read_run_file(run_file_1)
+    all_retrieved_2 = read_run_file(run_file_2)
+
+    print([key for key in all_relevant])
+
+    precisions_at_10_1 = [precision_at_k(all_relevant[key], all_retrieved_1[key], 10) for key in all_relevant]
+    precisions_at_10_2 = [precision_at_k(all_relevant[key], all_retrieved_2[key], 10) for key in all_relevant]
+    for prec1, prec2 in zip(precisions_at_10_1, precisions_at_10_2):
+        print(prec1, prec2)
+
+    t_statistic, p_value = ttest_rel(precisions_at_10_1, precisions_at_10_2)
+
+    # Check the p-value to determine significance
+    alpha = 0.05
+    if p_value < alpha:
+        print("There is a significant difference in precision_at_10 performance between the two systems.")
+    else:
+        print("There is no significant difference in precision_at_10 performance between the two systems.")
+    print(t_statistic, p_value)
 
 
 def precision_at_rank_5(rel: list, ret: list) -> float:
     return precision_at_k(rel, ret, k=5)
+
+def precision_at_rank_20(rel: list, ret: list) -> float:
+    return precision_at_k(rel, ret, k=20)
