@@ -65,8 +65,9 @@ def pseudo_rel(query, retrieved_docs, k_pseudo_docs, term_frac, q_index):
 
     # Using the corpus get tf_idf ranks for all terms and enhance the current query with a fraction of these terms
     sorted_terms = get_tfidf(corpus)[0]
-    best_terms = sorted_terms[:(int(len(sorted_terms)*term_frac))]
-
+#     best_terms = sorted_terms[:(int(len(sorted_terms)*term_frac))] # Term Frac
+    best_terms = sorted_terms[:term_frac] # Term count
+    
     for new_term in best_terms:
         enhanced_query += " " + new_term[0]
         
